@@ -1,0 +1,543 @@
+<link rel="import" href="../../bower_components/polymer/polymer-element.html">
+<link rel="import" href="../../bower_components/polymer/lib/elements/dom-repeat.html">
+<link rel="import" href="../../bower_components/polymer/lib/elements/dom-if.html">
+
+<dom-module id="checkout-cabify">
+
+  <link rel="import" type="css" href="checkout-cabify.css">
+
+  <template>
+
+    <style>
+      :host {
+        display: block;
+        font-family: Avenir, "Avenir Next", "Segoe UI", sans-serif;
+      }
+    </style>
+
+    <template is="dom-if" if="[[showModal]]">
+
+      <!-- Starts modal -->
+      <div class="product-modal-background" on-click="toggleModal">
+        <div class="product-modal" on-click="stopProp">
+          <div class="img-container">
+          </div>
+          <div class="product-details">
+            <span class="close-button" on-click="toggleModal">x</span>
+            <div class="product-details-info">
+              <header>
+                <span class="product-title">[[productZoomed.name]]</span>
+                <span class="product-price">[[productZoomed.price]]€</span>
+              </header>
+              <main>
+                <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
+              </main>
+              <footer>
+                <small>Product code [[productZoomed.code]]</small>
+              </footer>
+            </div>
+            <div class="summary add-to-cart">
+              <button type="submit">Add to cart</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- Ends modal -->
+
+    </template>
+
+    <div id="root">
+      <main class="App">
+        <section class="products">
+
+          <h1 class="main">Shopping cart</h1>
+
+          <ul class="products-list tableHead">
+            <li class="products-list-title row">
+              <div class="col-product">Product details</div>
+              <div class="col-quantity">Quantity</div>
+              <div class="col-price">Price</div>
+              <div class="col-total">Total</div>
+            </li>
+          </ul>
+
+          <ul class="products-list">
+
+            <!-- Here we iterate all the products in our array to show the individual product template. -->
+            <template is="dom-repeat" items="{{products}}" as="product" itemsIndexAs="index">
+
+              <li class="product row">
+                <div class="col-product">
+                  <figure class="product-image" on-click="toggleModal">
+                    <!-- Polymer evaluates what is inside [[]], a function or variable. -->
+                    <img src="src/checkout-cabify/img/[[product.category]].png" alt="[[product.name]]" />
+                    <div class="product-description">
+                      <h1>[[product.name]]</h1>
+                      <p class="product-code">Product code [[product.code]]</p>
+                    </div>
+                  </figure>
+                </div>
+                <div class="col-quantity">
+                  <!-- onRemoveQuantity is the function that is executed when the event click happens. -->
+                  <button class="count" on-click="onRemoveQuantity">-</button>
+                  <input type="text" class="product-quantity" value="[[product.quantity]]" readonly/>
+                  <button class="count" on-click="onAddQuantity">+</button>
+                </div>
+                <div class="col-price">
+                  <span class="product-price">[[product.price]]</span
+                  ><span class="product-currency currency">€</span>
+                </div>
+                <div class="col-total">
+                  <span class="product-price">[[calcProdTotalPrice(product.price, product.quantity)]]</span
+                  ><span class="product-currency currency">€</span>
+                </div>
+              </li>
+
+            </template>
+
+          </ul>
+        </section>
+
+        <aside class="summary">
+          <h1 class="main">Order Summary</h1>
+          <ul class="summary-items wrapper border">
+            <li>
+              <!-- What Polymer evaluates inside [[]] are the methods or properties of the class that is the component. -->
+              <span class="summary-items-number">[[totalProdsQuantity]] Items</span>
+              <span class="summary-items-price">[[totalProdsPrice]]<span class="currency">€</span></span>
+            </li>
+          </ul>
+
+          <!-- If there are no discounts (so if the array is empty it turns to "false" boolean), it shows this template. -->
+          <template is="dom-if" if="[[!discounts]]">
+
+            <div class="summary-discounts wrapper-half border">
+              <h2>No discounts available</h2>
+            </div>
+
+          </template>
+
+          <!-- If there are, it shows this template. -->
+          <template is="dom-if" if="[[discounts]]">
+
+            <div class="summary-discounts wrapper-half border">
+
+              <h2>Discounts</h2>
+
+              <template is="dom-repeat" items="{{discounts}}" as="discount" itemsIndexAs="index">
+                <ul>
+                  <template is="dom-if" if="[[discount.discountAmount]]">
+                    <li>
+                      <span>[[discount.name]]
+                        <!-- It shows this just in case the discount in the iteration is the bulk discount. -->
+                        <template is="dom-if" if="[[isBulk(discount)]]"><small>([[discount.newPrice]]€ per unit)</small></template>
+                      </span>
+                      <span>-[[discount.discountAmount]]€</span>
+                    </li>
+                  </template>
+                </ul>
+              </template>
+                <!-- <li><span>x3 Shirt offer</span><span>-3€</span></li>
+                <li><span>Promo code</span><span>0€</span></li> -->
+
+            </div>
+
+          </template>
+
+          <div class="summary-total wrapper">
+            <ul>
+              <li>
+                <span class="summary-total-cost">Total cost</span
+                ><span class="summary-total-price">[[totalProdsPriceAfterDisc]]€</span>
+              </li>
+            </ul>
+            <button type="submit">Checkout</button>
+          </div>
+        </aside>
+      </main>
+    </div>
+
+  </template>
+
+  <script>
+    /**
+     * @customElement
+     * @polymer
+     */
+     /* All new custom components extends for Polymer.Element. */
+    class CheckoutCabify extends Polymer.Element {
+      static get is() { return 'checkout-cabify' } //We define the name of our tag.
+      static get properties() { //We define the properties of our component, including initial values and... the data type! */
+        return {                //We can populate them as attributes of our tag or as properties of the DOM object. */
+          products: {
+            type: Array,
+            value: [],
+            notify: true
+          },
+          discounts: {
+            type: Array,
+            value: [],
+            notify: true,
+            observer: 'discountsObserver' /* The discountsObserver method of this class will be executed when there is a change on this property "discounts". */
+          },
+          totalProdsQuantity: {
+            type: Number,
+            value: 0
+          },
+          totalProdsPrice: {
+            type: Number,
+            value: 0
+          },
+          totalProdsPriceAfterDisc: {
+            type: Number,
+            value: this.totalProdsPrice
+          },
+          productZoomed: {
+            type: Object,
+            value: {}
+          },
+          showModal: {
+            type: Boolean,
+            value: false
+          }
+        };
+      }
+
+      /**
+     * When the block that shows the product details is clicked prevents the close of the modal.
+     *
+     * @this CheckoutCabify
+     * @param {object} event - The event object when click occurs.
+     * @return {}
+     */
+      stopProp(event){
+        event.stopPropagation()
+      }
+
+      /**
+     * Shows and hide the zoom modal of a product.
+     *
+     * @this CheckoutCabify
+     * @param {object} event - The event object when click occurs.
+     * @return {}
+     */
+      toggleModal(event){
+
+        if(this.showModal === false){
+          let { model: { index } } = event
+          this.productZoomed = this.products[index]
+        }
+
+        this.showModal = !this.showModal
+
+      }
+
+      /**
+     * Confirms if the discount type is "bulk3x" or not.
+     *
+     * @this CheckoutCabify
+     * @param {object} discount - The current discount being evaluated.
+     * @return {boolean}
+     */
+      isBulk(discount){
+
+        return discount.type === 'bulk' ? true : false
+
+      }
+
+      /**
+     * Checks if discounts array have content and do products and discounts related calcs.
+     *
+     * @this CheckoutCabify
+     * @param {}
+     * @return {}
+     */
+      discountsObserver(){
+
+        if(this.products.length != 0){
+
+          this.calcProdsTotalQuantity()
+          this.calcProdsTotalPrice()
+
+          if(this.discounts.length != 0){
+
+            this.calcDiscounts()
+            this.applyDiscounts()
+
+          }
+
+        }
+
+      }
+
+      /**
+     * Calculates the available discounts.
+     *
+     * @this CheckoutCabify
+     * @param {}
+     * @return {this} CheckoutCabify
+     */
+      calcDiscounts(){
+
+        /**
+       * Assign the 2x1 discount to the correspondant discount item/object.
+       *
+       * @this CheckoutCabify
+       * @param {string} prodCode - The code of the product that has the discount available.
+       * @param {object} discountItem - Discount item/object.
+       * @param {number} discItemIndex - The discount item/object index in the array of discounts to manipulate it.
+       * @return {}
+       */
+        const twoForOne = (prodCode, discountItem, discItemIndex) => {
+
+          /**
+         * Returns the total amount of the discount when the quantity of the product is not divisible by 2.
+         *
+         * @this CheckoutCabify
+         * @param {object} currProduct - The product object the discount is applicable.
+         * @return {number} - The total amount of the discount.
+         */
+          const notByTwo = currProduct => {
+
+            return ( ( (currProduct.quantity / 2) - 0.5 ) * currProduct.price )
+
+          }
+
+          /**
+         * Returns the total amount of the discount when the quantity of the product is divisible by 2.
+         *
+         * @this CheckoutCabify
+         * @param {object} currProduct - The product object the discount is applicable.
+         * @return {number} - The total amount of the discount.
+         */
+          const byTwo = currProduct => {
+
+            return ( (currProduct.quantity / 2) * currProduct.price )
+
+          }
+
+          let discount = 0;
+
+          this.products.forEach( (currProduct) => {
+
+            // Identifies if the product code of one or more of the products in the cart matches with the applicable discount.
+            if( currProduct.code === prodCode ){
+
+              if( currProduct.quantity >= 2 ){
+
+                (currProduct.quantity % 2) ? discount = notByTwo(currProduct) : discount = byTwo(currProduct)
+
+              }else {
+                discount = 0
+              }
+
+              // Updates the value of the property in DOM and memory.
+              this.set('discounts.' + discItemIndex + '.discountAmount', discount)
+
+            }
+
+          } )
+
+        }
+
+        /**
+       * Assign the bulk 3x discount to the correspondant discount item/object.
+       *
+       * @this CheckoutCabify
+       * @param {string} prodCode - The code of the product that has the discount available.
+       * @param {object} discountItem - Discount item/object.
+       * @param {number} discItemIndex - The discount item/object index in the array of discounts to manipulate it.
+       * @return {}
+       */
+        const bulk = (prodCode, discountItem, discItemIndex) => {
+
+          /**
+         * Returns the total amount of the bulk discount.
+         *
+         * @this CheckoutCabify
+         * @param {object} currProduct - The product object the discount is applicable.
+         * @return {number} - The total amount of the discount.
+         */
+          const calcBulkDisc = currProduct => {
+
+            return (currProduct.price - discountItem.newPrice) * currProduct.quantity
+
+          }
+
+          let discount = 0;
+
+          this.products.forEach( (currProduct) => {
+
+            if( currProduct.code === prodCode ){
+
+              (currProduct.quantity >= 3) ? discount = calcBulkDisc(currProduct) : discount = 0
+
+              this.set('discounts.' + discItemIndex + '.discountAmount', discount)
+
+            }
+
+          } )
+
+        }
+
+        /**
+       * Find if there are applicable discounts by config.
+       *
+       * @this CheckoutCabify
+       * @param {}
+       * @return {}
+       */
+        const findDiscountsMacthes = () => {
+
+          this.discounts.forEach( (currentDiscItem, currentDiscItemIndex) => {
+
+            if( currentDiscItem.type === 'twoForOne' )
+              twoForOne(currentDiscItem.productCode, currentDiscItem, currentDiscItemIndex)
+            else if( currentDiscItem.type === 'bulk' )
+              bulk(currentDiscItem.productCode, currentDiscItem, currentDiscItemIndex)
+
+          } )
+
+        }
+
+        findDiscountsMacthes()
+
+        return this
+
+      }
+
+      /**
+     * Applies the discounts calculated before with the reduce method.
+     *
+     * @this CheckoutCabify
+     * @param {}
+     * @return {}
+     */
+      applyDiscounts(){
+
+        this.totalProdsPriceAfterDisc = this.discounts.reduce( (acc, currDiscItem) => {
+
+            return acc - currDiscItem.discountAmount
+
+        } , this.totalProdsPrice)
+
+      }
+
+      /**
+     * Calculates the total product price for a particular product.
+     *
+     * @this CheckoutCabify
+     * @param {number} price - The price of the current product.
+     * @param {number} quantity - The quantity selected of the current product.
+     * @return {number} - The total price.
+     */
+      calcProdTotalPrice(price,quantity){
+
+        return price * quantity
+
+      }
+
+      /**
+     * Calculates the total product quantity for all the products.
+     *
+     * @this CheckoutCabify
+     * @param {}
+     * @return {}
+     */
+      calcProdsTotalQuantity(){
+
+        this.totalProdsQuantity = this.products.reduce( (acc, currentProduct) => {
+
+          return acc + currentProduct.quantity
+
+        }, 0)
+
+      }
+
+      calcProdsTotalPrice(products){
+
+        //THE FOLLOWING COMMENTED CODE IS ANOTHER WAY TO POINT TO THE CLASS WITH THE WORD this, with which you can be more specific.
+        //I DECIDED TO USE AN ARROW FUNCTION BECAUSE IT AUTOMATICALLY MAKES this WORD POINTS TO THE OUTER FUNCTION, IN THIS CASE THE CLASS.
+
+        // const reduceFunction = (function(acc, currentProduct){
+        //
+        //   let totalProdPrice = this.calcProdTotalPrice(currentProduct.price, currentProduct.quantity);
+        //
+        //   return acc + totalProdPrice;
+        //
+        // }).bind(this)
+
+        this.totalProdsPrice = this.products.reduce( (acc, currentProduct) => {
+
+            let totalProdPrice = this.calcProdTotalPrice(currentProduct.price, currentProduct.quantity)
+
+            return acc + totalProdPrice
+
+        } , 0)
+
+
+      }
+
+      /**
+     * Adds a new product to the cart.
+     *
+     * @this CheckoutCabify
+     * @param {object} newProduct - The new product to add it to the list of the cart.
+     * @return {}
+     */
+      addNewProduct(newProduct){
+
+        this.push('products', newProduct)
+
+        this.calcProdsTotalQuantity()
+        this.calcProdsTotalPrice()
+
+        this.calcDiscounts()
+        this.applyDiscounts()
+
+      }
+
+      /**
+     * Increases the quantity of a product in the cart.
+     *
+     * @this CheckoutCabify
+     * @param {object} event - The event object when clicked, but here is destructured to use index, which is a number.
+     * @return {}
+     */
+      onAddQuantity( { model: { index } } ){
+
+        this.set('products.' + index + '.quantity', this.products[index].quantity + 1)
+
+        this.calcProdsTotalQuantity()
+        this.calcProdsTotalPrice()
+
+        this.calcDiscounts()
+        this.applyDiscounts()
+
+      }
+
+      /**
+     * Decreases the quantity of a product in the cart.
+     *
+     * @this CheckoutCabify
+     * @param {object} event - The event object when clicked, but here is destructured to use index, which is a number.
+     * @return {}
+     */
+      onRemoveQuantity( { model: { index } } ){
+
+        if(this.products[index].quantity > 0)
+          this.set('products.' + index + '.quantity', this.products[index].quantity - 1)
+
+        this.calcProdsTotalQuantity()
+        this.calcProdsTotalPrice()
+
+        this.calcDiscounts()
+        this.applyDiscounts()
+
+      }
+
+    }
+
+    window.customElements.define(CheckoutCabify.is, CheckoutCabify);
+  </script>
+</dom-module>

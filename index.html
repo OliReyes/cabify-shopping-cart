@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, minimum-scale=1, initial-scale=1, user-scalable=yes">
+
+    <title>shopping-cart-cabify</title>
+    <meta name="description" content="shopping-cart-cabify description">
+
+    <!-- See https://goo.gl/OOhYW5 -->
+    <link rel="manifest" href="/manifest.json">
+
+    <script src="/bower_components/webcomponentsjs/webcomponents-loader.js"></script>
+
+    <link rel="import" href="/src/checkout-cabify/checkout-cabify.html">
+  </head>
+  <style media="screen">
+    body{
+      margin: 0;
+    }
+    #addTshirt{
+      position: fixed;
+      bottom: 20px;
+      left: 20px;
+      margin-top: 24px;
+      padding-top: 20px;
+      padding-bottom: 20px;
+      padding-left: 70px;
+      padding-right: 70px;
+      border-radius: 4px;
+      background: #7350ff;
+      color: #ffffff;
+      font-size: 22px;
+      font-weight: bold;
+      line-height: 14px;
+      cursor: pointer;
+      border: none;
+      box-shadow: 0 5px 15px rgba(115, 80, 255, 1);
+      z-index: 1;
+    }
+  </style>
+  <body>
+
+    <button id="addTshirt" type="button" name="button">Add tshirt</button>
+
+    <checkout-cabify></checkout-cabify> <!-- The name of component/class is "checkout" as you asked for. -->
+
+  </body>
+
+  <script type="text/javascript">
+
+    // When the component built with Polymer is ready then I can fill it up and manipulate it.
+    document.addEventListener('WebComponentsReady', () => {
+
+      // Config objects.
+      const CHECKOUTCONFIG = {
+        products: [
+          { name: 'Cabify Cap', category: 'cap', price: 5, code: 'X3W2OPY', quantity: 6 },
+          { name: 'Cafify Coffee Mug', category: 'mug', price: 7.50, code: 'X2G2OPZ', quantity: 3 }
+        ],
+        discounts: [
+          { name: '2x1 Cap offer', type: 'twoForOne', productCode: 'X3W2OPY', discountAmount: 0 },
+          { name: '3x Tshirt offer', type: 'bulk', productCode: 'X7R2OPX', discountAmount: 0, newPrice: 19 }
+        ]
+      }
+
+      const checkoutCabify = document.querySelector('checkout-cabify')
+
+      checkoutCabify.products = CHECKOUTCONFIG.products
+      checkoutCabify.discounts = CHECKOUTCONFIG.discounts
+
+      // For adding a new product dinamically.
+      const addTshirt = document.getElementById('addTshirt');
+
+      addTshirt.addEventListener('click', event => {
+
+        checkoutCabify.addNewProduct({ name: 'Cabify T-Shirt', category: 'tshirt', price: 20.00, code: 'X7R2OPX', quantity: 1 })
+
+        event.target.disabled = true
+
+      } )
+
+      /***************************READ THIS BELLOW*****************************************/
+      //This is done automatically but I expose the methods because they can be used from here and you can manually produce the same result
+      // checkoutCabify.calcProdsTotalPrice()
+      // checkoutCabify.calcDiscounts().applyDiscounts()
+
+    });
+
+  </script>
+</html>

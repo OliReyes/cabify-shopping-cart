@@ -1,0 +1,6 @@
+{
+  "name": "shopping-cart-cabify",
+  "short_name": "shopping-cart-cabify",
+  "start_url": "/",
+  "display": "standalone"
+}
