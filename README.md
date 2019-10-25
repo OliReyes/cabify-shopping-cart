@@ -1,5 +1,6 @@
 # cabify-shopping-cart
-Technical test for the company MOVO (of Cabify) of a shopping cart made with Polymer. 
+Technical test for the company MOVO (of Cabify) of a shopping cart made with Polymer.
+<br>
 *I achieved all the specifications and challenges of the test, even the extra part.
 
 1. Install Node.js.
